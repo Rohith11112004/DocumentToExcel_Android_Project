@@ -24,20 +24,25 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Grant execute permission for gradlew
-      run: |
-        find . -name "gradlew" -exec chmod +x {} +
-
     - name: Build with Gradle
       run: |
         GRADLEW_PATH=$(find . -name "gradlew" | head -n 1)
         if [ -n "$GRADLEW_PATH" ]; then
           DIR=$(dirname "$GRADLEW_PATH")
           cd "$DIR"
+          chmod +x gradlew
           ./gradlew assembleDebug
         else
-          echo "gradlew not found"
-          exit 1
+          echo "gradlew not found, looking for build.gradle..."
+          BUILD_GRADLE=$(find . -name "build.gradle" -o -name "build.gradle.kts" | head -n 1)
+          if [ -n "$BUILD_GRADLE" ]; then
+            DIR=$(dirname "$BUILD_GRADLE")
+            cd "$DIR"
+            gradle assembleDebug
+          else
+            echo "No gradle configuration found."
+            exit 1
+          fi
         fi
 
     - name: Upload APK
